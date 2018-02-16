@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2009-2016 the original author or authors. Licensed under the 
+	Apache License, Version 2.0 (the "License"); you may not use this file except 
+	in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 独一无二的空间名 -->
+<mapper namespace="Command">
+
+	<resultMap type="com.jp.bean.Command" id="CommandResult">
+		<id column="C_ID" jdbcType="INTEGER" property="id" />
+		<result column="NAME" jdbcType="VARCHAR" property="name" />
+		<result column="DESCRIPTION" jdbcType="VARCHAR" property="description" />
+		<collection property="contentList" resultMap="Command_Content.Command_ContentResult"></collection>
+	</resultMap>
+	<!-- 只支持传递一个参数 -->
+	<select id="queryCommandList" parameterType="com.jp.bean.Command"
+		resultMap="CommandResult">
+		select a.ID C_ID,a.NAME,a.DESCRIPTION,b.ID,b.CONTENT,b.COMMAND_ID
+		from COMMAND a left join COMMAND_CONTENT b
+		on a.ID = b.COMMAND_ID
+		<where>
+			<!-- 不用考虑填充空格 -->
+			<!-- &amp;&amp; 表示&& 可以用and代替 &quot;&quot;表示"" -->
+			<if test="name!=null&amp;&amp;!&quot;&quot;.equals(name.trim())">
+				and a.NAME = #{name}</if>
+			<if
+				test="description!=null&amp;&amp;!&quot;&quot;.equals(description.trim())">
+				and a.DESCRIPTION like '%' #{description} '%'</if>
+		</where>
+	</select>
+	
+	<!-- 删除 -->
+	  <delete id="delete" parameterType="int">
+	      delete from COMMAND where ID = #{_parameter} 
+	  </delete>
+	  
+	  <!-- 查找指定command 的内容 -->
+  <select id="selectCommand" parameterType="String" resultMap="CommandResult">
+      select ID C_ID,NAME,DESCRIPTION from command where NAME = #{_parameter} 
+  </select>
+  <!-- 插入指令 -->
+  <!-- 返回主键值 keyProperty 中的值应该与Bean中名字相同，而不是数据库中的名字-->
+  <insert id="addCommand" parameterType="com.jp.bean.Command" useGeneratedKeys="true" keyProperty="id">
+      insert into command (NAME, DESCRIPTION) values(#{name}, #{description})
+  </insert>
+  <!-- 更新描述 -->
+  <update id="fixDescription" parameterType="com.jp.bean.Command">
+      update command set DESCRIPTION = #{description} where id = #{id};
+  </update>
+
+</mapper>
